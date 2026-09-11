@@ -3,6 +3,7 @@ package cl.duoc.bancoxyz.web.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -28,6 +29,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.BAD_REQUEST, message, request);
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex, HttpServletRequest request) {
+        return response(HttpStatus.UNAUTHORIZED, "Credenciales inválidas", request);
+    }
+
     private ResponseEntity<ApiError> response(HttpStatus status, String message, HttpServletRequest request) {
         return ResponseEntity.status(status).body(new ApiError(
                 Instant.now(),
@@ -38,4 +44,3 @@ public class GlobalExceptionHandler {
         ));
     }
 }
-

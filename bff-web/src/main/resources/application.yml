@@ -3,5 +3,20 @@ spring:
     name: bff-web
 
 server:
-  port: 8081
+  port: 8441
+  ssl:
+    enabled: true
+    key-store: ${WEB_SSL_KEYSTORE:file:certs/bff-web.p12}
+    key-store-type: PKCS12
+    key-store-password: ${WEB_SSL_KEYSTORE_PASSWORD}
+    key-alias: bff-web
 
+app:
+  security:
+    username: ${WEB_AUTH_USERNAME:web-user}
+    password: ${WEB_AUTH_PASSWORD}
+    jwt-secret-base64: ${JWT_SECRET_BASE64}
+    issuer: bff-backends
+    channel: WEB
+    role: WEB
+    token-ttl: 15m
