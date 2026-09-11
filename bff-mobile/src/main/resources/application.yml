@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: bff-mobile
+
+server:
+  port: 8082
+
