@@ -1,0 +1,37 @@
+EVIDENCIA DE EJECUCIÓN - BFF WEB
+Fecha: 11-09-2026
+
+Entorno utilizado
+- Java: Eclipse Temurin 17.0.19
+- Maven: 3.9.16
+- Spring Boot: 3.5.16
+- Puerto HTTPS: 8441
+
+Carga y depuración de datos legacy
+- Cuentas válidas cargadas: 50
+- Registros de cuentas descartados: 950
+- Movimientos válidos cargados: 859
+- Registros de movimientos descartados: 141
+- Transacciones válidas cargadas: 401
+- Registros de transacciones descartados: 599
+
+Verificación automática
+Comando ejecutado:
+  mvn -s ..\maven-settings.xml -pl bff-web -am clean test
+
+Resultado:
+  Tests ejecutados: 13
+  Fallos: 0
+  Errores: 0
+  Estado: BUILD SUCCESS
+
+Verificación funcional por HTTPS
+- POST /api/auth/token con credenciales WEB válidas: HTTP 200
+- GET /api/web/cuentas con token WEB: HTTP 200
+- Total informado por la consulta: 50 cuentas
+- Primera cuenta válida: 101, Diana Prince, saldo 8000.00
+- GET /api/web/cuentas sin token: HTTP 401
+- POST /api/auth/token con credenciales incorrectas: HTTP 401
+- Acceso con un token de otro canal: HTTP 403, cubierto por prueba de integración
+
+La clave y el token utilizados durante la ejecución no se almacenan en esta evidencia.

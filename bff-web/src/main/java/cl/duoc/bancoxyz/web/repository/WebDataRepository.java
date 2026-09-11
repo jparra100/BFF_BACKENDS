@@ -38,7 +38,7 @@ public class WebDataRepository {
     private final List<LegacyTransaction> transactions = new ArrayList<>();
 
     @PostConstruct
-    void loadData() {
+    public void loadData() {
         loadAccounts();
         loadMovements();
         loadTransactions();
