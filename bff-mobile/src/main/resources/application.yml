@@ -3,5 +3,20 @@ spring:
     name: bff-mobile
 
 server:
-  port: 8082
+  port: 8442
+  ssl:
+    enabled: true
+    key-store: ${MOBILE_SSL_KEYSTORE:file:certs/bff-mobile.p12}
+    key-store-type: PKCS12
+    key-store-password: ${MOBILE_SSL_KEYSTORE_PASSWORD}
+    key-alias: bff-mobile
 
+app:
+  security:
+    username: ${MOBILE_AUTH_USERNAME:mobile-user}
+    password: ${MOBILE_AUTH_PASSWORD}
+    jwt-secret-base64: ${JWT_SECRET_BASE64}
+    issuer: bff-backends
+    channel: MOBILE
+    role: MOBILE
+    token-ttl: 15m
