@@ -1,0 +1,38 @@
+EVIDENCIA DE EJECUCIÓN - BFF MÓVIL
+Fecha: 11-09-2026
+
+Entorno utilizado
+- Java: Eclipse Temurin 17.0.19
+- Maven: 3.9.16
+- Spring Boot: 3.5.16
+- Puerto HTTPS: 8442
+
+Carga optimizada para el canal Móvil
+- Filas de cuentas leídas: 1000
+- Cuentas cargadas: 50
+- Movimientos móviles cargados: 857
+- Movimientos inválidos o duplicados descartados: 143
+- Cuenta 101: tipo AHORRO, saldo 8000.00
+
+Verificación automática
+Comando ejecutado:
+  mvn -s ..\maven-settings.xml -pl bff-mobile -am clean test
+
+Resultado:
+  Tests ejecutados: 14
+  Fallos: 0
+  Errores: 0
+  Estado: BUILD SUCCESS
+
+Verificación funcional por HTTPS
+- Inicio del servicio en https://localhost:8442: correcto
+- POST /api/auth/token con credenciales MOBILE válidas: HTTP 200, canal MOBILE
+- GET /api/mobile/cuentas/101/resumen: HTTP 200
+- Campos del resumen: id, tipo, saldo
+- GET /api/mobile/cuentas/101/movimientos-recientes?limite=3: HTTP 200
+- Cantidad devuelta: 3
+- Campos por movimiento: fecha, tipo, monto
+- Solicitud sin token: HTTP 401
+- Token con rol o canal distinto: HTTP 403, cubierto por pruebas de integración
+
+Los certificados se generan localmente y están excluidos de Git. Las claves y los tokens no se almacenan en esta evidencia.
