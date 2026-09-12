@@ -1,0 +1,29 @@
+RESULTADO GENERAL DE VERIFICACIÓN
+Fecha: 11-09-2026
+
+Comando ejecutado desde la raíz:
+  mvn -s ..\maven-settings.xml clean test
+
+Resumen por módulo
+- BFF Web: 13 tests, 0 fallos, 0 errores
+- BFF Cajero: 13 tests, 0 fallos, 0 errores
+- BFF Móvil: 14 tests, 0 fallos, 0 errores
+- Total: 40 tests aprobados
+
+Resultado del reactor Maven
+- BFF Backends Banco XYZ: SUCCESS
+- BFF Web: SUCCESS
+- BFF Cajero: SUCCESS
+- BFF Móvil: SUCCESS
+- Estado final: BUILD SUCCESS
+
+Comprobaciones funcionales realizadas
+- Web disponible por HTTPS en el puerto 8441
+- Móvil disponible por HTTPS en el puerto 8442
+- Cajero disponible por HTTPS en el puerto 8443
+- Emisión y validación de tokens JWT por canal
+- Rechazo 401 para solicitudes protegidas sin token
+- Rechazo 403 al usar un token Web en una ruta de Cajero
+- Respuestas completas para Web, operacionales para Cajero y reducidas para Móvil
+
+Los certificados PKCS12 son locales y se encuentran ignorados por Git.
