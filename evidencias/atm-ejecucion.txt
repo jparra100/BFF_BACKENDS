@@ -1,0 +1,38 @@
+EVIDENCIA DE EJECUCIÓN - BFF CAJERO
+Fecha: 11-09-2026
+
+Entorno utilizado
+- Java: Eclipse Temurin 17.0.19
+- Maven: 3.9.16
+- Spring Boot: 3.5.16
+- Puerto HTTPS: 8443
+
+Carga de datos para el canal Cajero
+- Filas legacy leídas: 1000
+- Cuentas cargadas con su primer saldo válido: 50
+- Filas inválidas o posteriores para la misma cuenta: 950
+- Cuenta 101: saldo inicial 8000.00
+- Cuenta 110: saldo inicial 5000.00
+
+Verificación automática
+Comando ejecutado:
+  mvn -s ..\maven-settings.xml -pl bff-atm -am clean test
+
+Resultado:
+  Tests ejecutados: 13
+  Fallos: 0
+  Errores: 0
+  Estado: BUILD SUCCESS
+
+Verificación funcional por HTTPS
+- Inicio del servicio en https://localhost:8443: correcto
+- POST /api/auth/token con credenciales ATM válidas: HTTP 200, canal ATM
+- GET /api/atm/cuentas/101/saldo con token ATM: HTTP 200, saldo 8000.00
+- POST /api/atm/cuentas/101/retiros por 1000.00: HTTP 200, saldo final 7000.00
+- Retiro con monto cero: HTTP 400
+- Retiro superior al saldo: HTTP 409
+- Consulta de cuenta inexistente: HTTP 404
+- Token emitido por el canal Web usado en Cajero: HTTP 403
+- Solicitud sin token: HTTP 401, cubierta por prueba de integración
+
+Los certificados se generan localmente y están excluidos de Git. Las claves y los tokens no se almacenan en esta evidencia.
