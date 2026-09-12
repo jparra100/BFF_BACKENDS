@@ -3,5 +3,20 @@ spring:
     name: bff-atm
 
 server:
-  port: 8083
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: ${ATM_SSL_KEYSTORE:file:certs/bff-atm.p12}
+    key-store-type: PKCS12
+    key-store-password: ${ATM_SSL_KEYSTORE_PASSWORD}
+    key-alias: bff-atm
 
+app:
+  security:
+    username: ${ATM_AUTH_USERNAME:atm-user}
+    password: ${ATM_AUTH_PASSWORD}
+    jwt-secret-base64: ${JWT_SECRET_BASE64}
+    issuer: bff-backends
+    channel: ATM
+    role: ATM
+    token-ttl: 15m
