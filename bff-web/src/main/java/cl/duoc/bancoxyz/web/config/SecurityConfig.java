@@ -135,7 +135,7 @@ public class SecurityConfig {
         return decoder;
     }
 
-    private Converter<Jwt, JwtAuthenticationToken> jwtAuthenticationConverter() {
+    Converter<Jwt, JwtAuthenticationToken> jwtAuthenticationConverter() {
         return jwt -> {
             List<GrantedAuthority> authorities = new ArrayList<>();
             List<String> roles = jwt.getClaimAsStringList("roles");

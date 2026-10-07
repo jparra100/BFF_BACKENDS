@@ -80,4 +80,5 @@ class WebSecurityIntegrationTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
     }
+
 }
