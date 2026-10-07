@@ -48,6 +48,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.UNAUTHORIZED, "Credenciales inválidas", request);
     }
 
+    @ExceptionHandler(RemoteServiceException.class)
+    ResponseEntity<ApiError> handleRemoteService(RemoteServiceException ex, HttpServletRequest request) {
+        return response(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request);
+    }
+
     private ResponseEntity<ApiError> response(HttpStatus status, String message, HttpServletRequest request) {
         return ResponseEntity.status(status).body(new ApiError(
                 Instant.now(),
