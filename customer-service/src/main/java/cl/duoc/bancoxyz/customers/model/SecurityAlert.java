@@ -1,0 +1,3 @@
+package cl.duoc.bancoxyz.customers.model;
+import jakarta.persistence.Entity; import jakarta.persistence.Id; import java.math.BigDecimal; import java.time.Instant; import java.util.UUID;
+@Entity public class SecurityAlert { @Id private UUID eventId; private String operationId; private Long customerId; private BigDecimal amount; private String reason; private Instant occurredAt; protected SecurityAlert(){} public SecurityAlert(UUID eventId,String operationId,Long customerId,BigDecimal amount,String reason,Instant occurredAt){this.eventId=eventId;this.operationId=operationId;this.customerId=customerId;this.amount=amount;this.reason=reason;this.occurredAt=occurredAt;} }

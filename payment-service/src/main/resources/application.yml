@@ -2,6 +2,11 @@ spring:
   application.name: payment-service
   config.import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
   security.oauth2.resourceserver.jwt.issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8180/realms/banco-xyz}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   datasource:
     url: ${PAYMENT_DB_URL:jdbc:h2:file:./data/payments;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
     username: ${PAYMENT_DB_USER:sa}
@@ -15,3 +20,4 @@ eureka.client:
   enabled: ${EUREKA_ENABLED:false}
   service-url.defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 app.security.enabled: ${SECURITY_ENABLED:false}
+app.kafka.enabled: ${KAFKA_ENABLED:false}
