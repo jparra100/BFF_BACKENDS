@@ -1,0 +1,11 @@
+spring:
+  application.name: customer-service
+  datasource:
+    url: ${CUSTOMER_DB_URL:jdbc:h2:file:./data/customers;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    username: ${CUSTOMER_DB_USER:sa}
+    password: ${CUSTOMER_DB_PASSWORD:}
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+server.port: ${SERVER_PORT:8083}
+management.endpoints.web.exposure.include: health,info,metrics

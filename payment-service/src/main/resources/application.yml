@@ -1,0 +1,11 @@
+spring:
+  application.name: payment-service
+  datasource:
+    url: ${PAYMENT_DB_URL:jdbc:h2:file:./data/payments;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    username: ${PAYMENT_DB_USER:sa}
+    password: ${PAYMENT_DB_PASSWORD:}
+  jpa:
+    hibernate.ddl-auto: update
+    open-in-view: false
+server.port: ${SERVER_PORT:8082}
+management.endpoints.web.exposure.include: health,info,metrics

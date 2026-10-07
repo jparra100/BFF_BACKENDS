@@ -1,0 +1,3 @@
+package cl.duoc.bancoxyz.payments.controller;
+import cl.duoc.bancoxyz.payments.dto.*; import cl.duoc.bancoxyz.payments.service.PaymentProcessingService; import jakarta.validation.Valid; import org.springframework.http.HttpStatus; import org.springframework.web.bind.annotation.*; import java.util.List;
+@RestController @RequestMapping("/api/payments") public class PaymentController {private final PaymentProcessingService service;public PaymentController(PaymentProcessingService service){this.service=service;} @GetMapping public List<PaymentResponse> all(){return service.all();}@PostMapping @ResponseStatus(HttpStatus.CREATED) public PaymentResponse process(@Valid @RequestBody PaymentRequest request){return service.process(request);} }

@@ -1,0 +1,3 @@
+package cl.duoc.bancoxyz.customers.service;
+import cl.duoc.bancoxyz.customers.dto.CustomerRequest; import cl.duoc.bancoxyz.customers.model.Customer; import cl.duoc.bancoxyz.customers.repository.CustomerRepository; import org.junit.jupiter.api.Test; import static org.assertj.core.api.Assertions.assertThat; import static org.mockito.ArgumentMatchers.any; import static org.mockito.Mockito.*;
+class CustomerManagementServiceTest { @Test void createsCustomer(){CustomerRepository r=mock(CustomerRepository.class);when(r.save(any())).thenReturn(new Customer("Ana","ana@example.com","PERSONA"));var response=new CustomerManagementService(r).create(new CustomerRequest("Ana","ana@example.com","PERSONA"));assertThat(response.name()).isEqualTo("Ana");} }
