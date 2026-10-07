@@ -1,5 +1,6 @@
 server.port: 8441
 app.remote-services.enabled: true
+app.security.mode: external
 resilience4j.circuitbreaker.instances.banking.sliding-window-size: 5
 resilience4j.circuitbreaker.instances.banking.failure-rate-threshold: 50
 resilience4j.timelimiter.instances.banking.timeout-duration: 2s

@@ -14,6 +14,7 @@ server:
 
 app:
   security:
+    mode: ${SECURITY_MODE:local}
     username: ${WEB_AUTH_USERNAME:web-user}
     password: ${WEB_AUTH_PASSWORD}
     jwt-secret-base64: ${JWT_SECRET_BASE64}
