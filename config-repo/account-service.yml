@@ -1,0 +1,2 @@
+server.port: 8081
+spring.datasource.url: ${ACCOUNT_DB_URL:jdbc:postgresql://postgres:5432/accounts}

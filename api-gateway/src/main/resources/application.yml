@@ -1,0 +1,28 @@
+server.port: ${SERVER_PORT:8080}
+spring:
+  application.name: api-gateway
+  cloud.gateway.server.webflux.routes:
+    - id: bff-web
+      uri: lb://bff-web
+      predicates: [Path=/api/web/**]
+    - id: bff-atm
+      uri: lb://bff-atm
+      predicates: [Path=/api/atm/**]
+    - id: bff-mobile
+      uri: lb://bff-mobile
+      predicates: [Path=/api/mobile/**]
+    - id: accounts
+      uri: lb://account-service
+      predicates: [Path=/api/accounts/**]
+    - id: payments
+      uri: lb://payment-service
+      predicates: [Path=/api/payments/**]
+    - id: customers
+      uri: lb://customer-service
+      predicates: [Path=/api/customers/**]
+  security.oauth2.resourceserver.jwt.issuer-uri: ${OAUTH2_ISSUER_URI:http://keycloak:8080/realms/banco-xyz}
+eureka.client:
+  service-url.defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  enabled: ${EUREKA_ENABLED:false}
+app.security.enabled: ${SECURITY_ENABLED:false}
+management.endpoints.web.exposure.include: health,info,gateway

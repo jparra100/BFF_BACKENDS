@@ -1,0 +1,2 @@
+server.port: 8082
+spring.datasource.url: ${PAYMENT_DB_URL:jdbc:postgresql://postgres:5432/payments}

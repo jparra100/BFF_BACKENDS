@@ -1,0 +1,3 @@
+package cl.duoc.bancoxyz.accounts.config;
+import org.springframework.beans.factory.annotation.Value; import org.springframework.context.annotation.*; import org.springframework.security.config.annotation.web.builders.HttpSecurity; import org.springframework.security.web.SecurityFilterChain;
+@Configuration public class SecurityConfig { @Bean SecurityFilterChain filterChain(HttpSecurity http,@Value("${app.security.enabled:false}") boolean enabled)throws Exception{http.csrf(c->c.disable());if(enabled){http.authorizeHttpRequests(a->a.requestMatchers("/actuator/health").permitAll().anyRequest().hasAnyRole("WEB","ATM","MOBILE","ADMIN")).oauth2ResourceServer(o->o.jwt(j->{}));}else{http.authorizeHttpRequests(a->a.anyRequest().permitAll());}return http.build();} }

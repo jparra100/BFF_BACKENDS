@@ -22,6 +22,9 @@
         <module>account-service</module>
         <module>payment-service</module>
         <module>customer-service</module>
+        <module>config-server</module>
+        <module>discovery-server</module>
+        <module>api-gateway</module>
         <module>bff-web</module>
         <module>bff-atm</module>
         <module>bff-mobile</module>

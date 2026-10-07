@@ -1,6 +1,7 @@
 spring:
   application:
     name: bff-mobile
+  config.import: optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}
 
 server:
   port: 8442
@@ -20,3 +21,9 @@ app:
     channel: MOBILE
     role: MOBILE
     token-ttl: 15m
+  remote-services.enabled: ${REMOTE_SERVICES_ENABLED:false}
+
+eureka.client:
+  enabled: ${EUREKA_ENABLED:false}
+  service-url.defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+management.endpoints.web.exposure.include: health,info,metrics

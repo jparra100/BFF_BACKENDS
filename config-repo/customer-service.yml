@@ -1,0 +1,2 @@
+server.port: 8083
+spring.datasource.url: ${CUSTOMER_DB_URL:jdbc:postgresql://postgres:5432/customers}
