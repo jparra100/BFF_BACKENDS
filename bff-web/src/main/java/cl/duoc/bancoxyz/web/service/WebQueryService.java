@@ -1,5 +1,6 @@
 package cl.duoc.bancoxyz.web.service;
 
+import cl.duoc.bancoxyz.web.client.WebBankingClient;
 import cl.duoc.bancoxyz.web.dto.PageResponse;
 import cl.duoc.bancoxyz.web.dto.WebAccountDetailResponse;
 import cl.duoc.bancoxyz.web.dto.WebAccountResponse;
@@ -11,21 +12,39 @@ import cl.duoc.bancoxyz.web.model.AnnualMovement;
 import cl.duoc.bancoxyz.web.model.LegacyTransaction;
 import cl.duoc.bancoxyz.web.repository.WebDataRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class WebQueryService {
 
     private final WebDataRepository repository;
+    private final Optional<WebBankingClient> bankingClient;
+    private final boolean remoteServicesEnabled;
 
     public WebQueryService(WebDataRepository repository) {
+        this(repository, Optional.empty(), false);
+    }
+
+    @Autowired
+    public WebQueryService(
+            WebDataRepository repository,
+            Optional<WebBankingClient> bankingClient,
+            @Value("${app.remote-services.enabled:false}") boolean remoteServicesEnabled) {
         this.repository = repository;
+        this.bankingClient = bankingClient;
+        this.remoteServicesEnabled = remoteServicesEnabled;
     }
 
     public PageResponse<WebAccountResponse> findAccounts(String type, int page, int size) {
+        if (remoteServicesEnabled) {
+            return remoteClient().findAccounts(type, page, size);
+        }
         String normalizedType = normalizeFilter(type);
         List<WebAccountResponse> accounts = repository.findAllAccounts().stream()
                 .filter(account -> normalizedType == null || account.accountType().equals(normalizedType))
@@ -35,6 +54,9 @@ public class WebQueryService {
     }
 
     public WebAccountDetailResponse findAccount(long accountId) {
+        if (remoteServicesEnabled) {
+            return remoteClient().findAccount(accountId);
+        }
         Account account = requireAccount(accountId);
         List<WebMovementResponse> movements = repository.findMovements(accountId).stream()
                 .map(this::toMovementResponse)
@@ -50,6 +72,9 @@ public class WebQueryService {
     }
 
     public PageResponse<WebMovementResponse> findMovements(long accountId, int page, int size) {
+        if (remoteServicesEnabled) {
+            return remoteClient().findMovements(accountId, page, size);
+        }
         requireAccount(accountId);
         List<WebMovementResponse> movements = repository.findMovements(accountId).stream()
                 .map(this::toMovementResponse)
@@ -66,6 +91,10 @@ public class WebQueryService {
     ) {
         if (from != null && to != null && from.isAfter(to)) {
             throw new IllegalArgumentException("La fecha desde no puede ser posterior a la fecha hasta");
+        }
+
+        if (remoteServicesEnabled) {
+            return remoteClient().findTransactions(type, from, to, page, size);
         }
 
         String normalizedType = normalizeFilter(type);
@@ -113,6 +142,11 @@ public class WebQueryService {
 
     private String normalizeFilter(String value) {
         return value == null || value.isBlank() ? null : value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private WebBankingClient remoteClient() {
+        return bankingClient.orElseThrow(() -> new IllegalStateException(
+                "La integración remota está habilitada, pero el cliente no está disponible"));
     }
 }
 
