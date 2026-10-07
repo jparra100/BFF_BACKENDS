@@ -11,6 +11,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 
 @Component
 @ConditionalOnProperty(name = "app.remote-services.enabled", havingValue = "true")
@@ -97,6 +101,7 @@ public class WebBankingClient {
     private List<RemoteAccount> accounts() {
         return execute("accounts", () -> restClient.get()
                 .uri("http://account-service/api/accounts")
+                .headers(forwardAuthorization())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {}));
     }
@@ -104,6 +109,7 @@ public class WebBankingClient {
     private RemoteAccount account(long accountId) {
         return execute("accounts", () -> restClient.get()
                 .uri("http://account-service/api/accounts/{id}", accountId)
+                .headers(forwardAuthorization())
                 .retrieve()
                 .body(RemoteAccount.class));
     }
@@ -111,6 +117,7 @@ public class WebBankingClient {
     private RemoteCustomer customer(long customerId) {
         return execute("customers", () -> restClient.get()
                 .uri("http://customer-service/api/customers/{id}", customerId)
+                .headers(forwardAuthorization())
                 .retrieve()
                 .body(RemoteCustomer.class));
     }
@@ -118,6 +125,7 @@ public class WebBankingClient {
     private List<RemotePayment> payments() {
         return execute("payments", () -> restClient.get()
                 .uri("http://payment-service/api/payments")
+                .headers(forwardAuthorization())
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {}));
     }
@@ -131,6 +139,15 @@ public class WebBankingClient {
         } catch (RuntimeException ex) {
             throw mapError(ex);
         }
+    }
+
+    private Consumer<HttpHeaders> forwardAuthorization() {
+        return headers -> {
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication instanceof JwtAuthenticationToken jwt) {
+                headers.setBearerAuth(jwt.getToken().getTokenValue());
+            }
+        };
     }
 
     private RuntimeException mapError(Throwable error) {

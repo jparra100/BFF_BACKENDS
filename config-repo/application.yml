@@ -3,5 +3,6 @@ eureka:
     enabled: true
     service-url.defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
 spring.security.oauth2.resourceserver.jwt.issuer-uri: ${OAUTH2_ISSUER_URI:http://keycloak:8080/realms/banco-xyz}
+spring.security.oauth2.resourceserver.jwt.jwk-set-uri: ${OAUTH2_JWK_SET_URI:http://keycloak:8080/realms/banco-xyz/protocol/openid-connect/certs}
 app.security.enabled: true
 management.endpoints.web.exposure.include: health,info,metrics

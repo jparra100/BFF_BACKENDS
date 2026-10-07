@@ -1,0 +1,208 @@
+x-java-build: &java-build
+  context: .
+  dockerfile: Dockerfile
+
+x-service-environment: &service-environment
+  CONFIG_SERVER_URL: http://config-server:8888
+  EUREKA_ENABLED: "true"
+  EUREKA_URL: http://discovery-server:8761/eureka/
+  OAUTH2_ISSUER_URI: http://localhost:8180/realms/banco-xyz
+  OAUTH2_JWK_SET_URI: http://keycloak:8080/realms/banco-xyz/protocol/openid-connect/certs
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bank
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bank_local}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bank"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  kafka:
+    image: apache/kafka:3.9.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME: http://localhost:8180
+      KC_HTTP_ENABLED: "true"
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./docker/keycloak/banco-xyz-realm.json:/opt/keycloak/data/import/banco-xyz-realm.json:ro
+
+  config-server:
+    build:
+      <<: *java-build
+      args: { MODULE: config-server }
+    environment:
+      CONFIG_REPO: file:/config-repo
+    volumes:
+      - ./config-repo:/config-repo:ro
+    ports:
+      - "8888:8888"
+
+  discovery-server:
+    build:
+      <<: *java-build
+      args: { MODULE: discovery-server }
+    ports:
+      - "8761:8761"
+
+  account-service:
+    build:
+      <<: *java-build
+      args: { MODULE: account-service }
+    environment:
+      <<: *service-environment
+      ACCOUNT_DB_URL: jdbc:postgresql://postgres:5432/accounts
+      ACCOUNT_DB_USER: bank
+      ACCOUNT_DB_PASSWORD: ${POSTGRES_PASSWORD:-bank_local}
+      KAFKA_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
+      config-server: { condition: service_started }
+      discovery-server: { condition: service_started }
+      keycloak: { condition: service_started }
+
+  payment-service:
+    build:
+      <<: *java-build
+      args: { MODULE: payment-service }
+    environment:
+      <<: *service-environment
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/payments
+      PAYMENT_DB_USER: bank
+      PAYMENT_DB_PASSWORD: ${POSTGRES_PASSWORD:-bank_local}
+      KAFKA_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
+      config-server: { condition: service_started }
+      discovery-server: { condition: service_started }
+      keycloak: { condition: service_started }
+
+  customer-service:
+    build:
+      <<: *java-build
+      args: { MODULE: customer-service }
+    environment:
+      <<: *service-environment
+      CUSTOMER_DB_URL: jdbc:postgresql://postgres:5432/customers
+      CUSTOMER_DB_USER: bank
+      CUSTOMER_DB_PASSWORD: ${POSTGRES_PASSWORD:-bank_local}
+      KAFKA_ENABLED: "true"
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
+      config-server: { condition: service_started }
+      discovery-server: { condition: service_started }
+      keycloak: { condition: service_started }
+
+  bff-web:
+    build:
+      <<: *java-build
+      args: { MODULE: bff-web }
+    environment:
+      <<: *service-environment
+      SECURITY_MODE: external
+      REMOTE_SERVICES_ENABLED: "true"
+      SERVER_SSL_ENABLED: "false"
+      WEB_AUTH_PASSWORD: unused
+      WEB_SSL_KEYSTORE_PASSWORD: unused
+      JWT_SECRET_BASE64: RXN0YS1jbGF2ZS1zZS11c2Etc29sby1lbi1kZXNhcnJvbGxvLWxvY2Fs
+    depends_on:
+      account-service: { condition: service_started }
+      payment-service: { condition: service_started }
+      customer-service: { condition: service_started }
+
+  bff-atm:
+    build:
+      <<: *java-build
+      args: { MODULE: bff-atm }
+    environment:
+      <<: *service-environment
+      SECURITY_MODE: external
+      REMOTE_SERVICES_ENABLED: "true"
+      SERVER_SSL_ENABLED: "false"
+      ATM_AUTH_PASSWORD: unused
+      ATM_SSL_KEYSTORE_PASSWORD: unused
+      JWT_SECRET_BASE64: RXN0YS1jbGF2ZS1zZS11c2Etc29sby1lbi1kZXNhcnJvbGxvLWxvY2Fs
+    depends_on:
+      account-service: { condition: service_started }
+      payment-service: { condition: service_started }
+
+  bff-mobile:
+    build:
+      <<: *java-build
+      args: { MODULE: bff-mobile }
+    environment:
+      <<: *service-environment
+      SECURITY_MODE: external
+      REMOTE_SERVICES_ENABLED: "true"
+      SERVER_SSL_ENABLED: "false"
+      MOBILE_AUTH_PASSWORD: unused
+      MOBILE_SSL_KEYSTORE_PASSWORD: unused
+      JWT_SECRET_BASE64: RXN0YS1jbGF2ZS1zZS11c2Etc29sby1lbi1kZXNhcnJvbGxvLWxvY2Fs
+    depends_on:
+      account-service: { condition: service_started }
+      payment-service: { condition: service_started }
+
+  api-gateway:
+    build:
+      <<: *java-build
+      args: { MODULE: api-gateway }
+    environment:
+      <<: *service-environment
+      SECURITY_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server: { condition: service_started }
+      keycloak: { condition: service_started }
+      bff-web: { condition: service_started }
+      bff-atm: { condition: service_started }
+      bff-mobile: { condition: service_started }
+
+  batch-processing:
+    profiles: ["batch"]
+    build:
+      <<: *java-build
+      args: { MODULE: batch-processing }
+    environment:
+      BATCH_DB_URL: jdbc:postgresql://postgres:5432/batch
+      BATCH_DB_USER: bank
+      BATCH_DB_PASSWORD: ${POSTGRES_PASSWORD:-bank_local}
+      BATCH_JOB_ENABLED: "true"
+      LEGACY_DATA_DIR: /legacy-data
+    volumes:
+      - ./bff-web/src/main/resources/data:/legacy-data:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+
+volumes:
+  postgres-data:
