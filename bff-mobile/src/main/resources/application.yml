@@ -14,6 +14,7 @@ server:
 
 app:
   security:
+    mode: ${SECURITY_MODE:local}
     username: ${MOBILE_AUTH_USERNAME:mobile-user}
     password: ${MOBILE_AUTH_PASSWORD}
     jwt-secret-base64: ${JWT_SECRET_BASE64}
