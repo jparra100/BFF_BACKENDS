@@ -14,6 +14,7 @@ server:
 
 app:
   security:
+    mode: ${SECURITY_MODE:local}
     username: ${ATM_AUTH_USERNAME:atm-user}
     password: ${ATM_AUTH_PASSWORD}
     jwt-secret-base64: ${JWT_SECRET_BASE64}

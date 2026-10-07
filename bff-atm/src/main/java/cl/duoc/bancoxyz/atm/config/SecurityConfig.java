@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -44,6 +45,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableConfigurationProperties(SecurityProperties.class)
@@ -89,11 +91,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     UserDetailsService userDetailsService(SecurityProperties properties, PasswordEncoder passwordEncoder) {
         var user = User.withUsername(properties.username())
                 .password(passwordEncoder.encode(properties.password()))
@@ -103,6 +107,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder
@@ -113,6 +118,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     SecretKey jwtSecretKey(SecurityProperties properties) {
         byte[] keyBytes = Base64.getDecoder().decode(properties.jwtSecretBase64());
         if (keyBytes.length < 32) {
@@ -122,11 +128,13 @@ public class SecurityConfig {
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     JwtEncoder jwtEncoder(SecretKey secretKey) {
         return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
     }
 
     @Bean
+    @ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
     JwtDecoder jwtDecoder(SecretKey secretKey, SecurityProperties properties) {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
@@ -135,12 +143,23 @@ public class SecurityConfig {
         return decoder;
     }
 
-    private Converter<Jwt, JwtAuthenticationToken> jwtAuthenticationConverter() {
+    Converter<Jwt, JwtAuthenticationToken> jwtAuthenticationConverter() {
         return jwt -> {
             List<GrantedAuthority> authorities = new ArrayList<>();
             List<String> roles = jwt.getClaimAsStringList("roles");
             if (roles != null) {
                 roles.forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role)));
+            }
+            Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+            if (realmAccess != null && realmAccess.get("roles") instanceof List<?> realmRoles) {
+                realmRoles.stream()
+                        .map(String::valueOf)
+                        .forEach(role -> {
+                            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+                            if ("ATM".equals(role)) {
+                                authorities.add(new SimpleGrantedAuthority("CHANNEL_ATM"));
+                            }
+                        });
             }
             String channel = jwt.getClaimAsString("channel");
             if (channel != null) {

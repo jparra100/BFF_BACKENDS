@@ -8,11 +8,13 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 import java.time.Instant;
 import java.util.List;
 
 @Service
+@ConditionalOnProperty(name = "app.security.mode", havingValue = "local", matchIfMissing = true)
 public class JwtTokenService {
 
     private final JwtEncoder encoder;
