@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: batch-processing
+  datasource:
+    url: ${BATCH_DB_URL:jdbc:h2:file:./data/batch;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    username: ${BATCH_DB_USER:sa}
+    password: ${BATCH_DB_PASSWORD:}
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: ${BATCH_JOB_ENABLED:false}
+  sql:
+    init:
+      mode: always
+
+legacy:
+  data-dir: ${LEGACY_DATA_DIR:../bff-web/src/main/resources/data}
