@@ -14,18 +14,34 @@ import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.support.SynchronizedItemStreamReader;
+import org.springframework.batch.item.support.builder.SynchronizedItemStreamReaderBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.TransientDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 
 @Configuration
 public class BatchJobsConfig {
+
+    @Bean
+    TaskExecutor batchTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setThreadNamePrefix("batch-worker-");
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(16);
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.initialize();
+        return executor;
+    }
 
     @Bean
     Job dailyTransactionsJob(JobRepository repository, Step dailyTransactionsStep) {
@@ -51,6 +67,7 @@ public class BatchJobsConfig {
     @Bean
     Step dailyTransactionsStep(JobRepository repository, PlatformTransactionManager transactionManager,
                                LegacyBatchProcessors processors, DataSource dataSource,
+                               @Qualifier("batchTaskExecutor") TaskExecutor batchTaskExecutor,
                                @Value("${legacy.data-dir}") String dataDir) {
         return new StepBuilder("dailyTransactionsStep", repository)
                 .<String[], ProcessedTransaction>chunk(100, transactionManager)
@@ -59,12 +76,14 @@ public class BatchJobsConfig {
                 .writer(transactionWriter(dataSource))
                 .faultTolerant().skip(IllegalArgumentException.class).skipLimit(1000)
                 .retry(TransientDataAccessException.class).retryLimit(3)
+                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
     @Bean
     Step monthlyInterestStep(JobRepository repository, PlatformTransactionManager transactionManager,
                              LegacyBatchProcessors processors, DataSource dataSource,
+                             @Qualifier("batchTaskExecutor") TaskExecutor batchTaskExecutor,
                              @Value("${legacy.data-dir}") String dataDir) {
         return new StepBuilder("monthlyInterestStep", repository)
                 .<String[], InterestResult>chunk(100, transactionManager)
@@ -73,12 +92,14 @@ public class BatchJobsConfig {
                 .writer(interestWriter(dataSource))
                 .faultTolerant().skip(IllegalArgumentException.class).skipLimit(1000)
                 .retry(TransientDataAccessException.class).retryLimit(3)
+                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
     @Bean
     Step annualStatementsStep(JobRepository repository, PlatformTransactionManager transactionManager,
                               LegacyBatchProcessors processors, DataSource dataSource,
+                              @Qualifier("batchTaskExecutor") TaskExecutor batchTaskExecutor,
                               @Value("${legacy.data-dir}") String dataDir) {
         return new StepBuilder("annualStatementsStep", repository)
                 .<String[], AnnualStatementLine>chunk(100, transactionManager)
@@ -87,6 +108,7 @@ public class BatchJobsConfig {
                 .writer(statementWriter(dataSource))
                 .faultTolerant().skip(IllegalArgumentException.class).skipLimit(1000)
                 .retry(TransientDataAccessException.class).retryLimit(3)
+                .taskExecutor(batchTaskExecutor)
                 .build();
     }
 
@@ -103,7 +125,11 @@ public class BatchJobsConfig {
                 .fieldSetMapper(fieldSet -> fieldSet.getValues())
                 .build();
         reader.setSaveState(true);
-        return reader;
+        SynchronizedItemStreamReader<String[]> synchronizedReader =
+                new SynchronizedItemStreamReaderBuilder<String[]>()
+                        .delegate(reader)
+                        .build();
+        return synchronizedReader;
     }
 
     private JdbcBatchItemWriter<ProcessedTransaction> transactionWriter(DataSource dataSource) {
